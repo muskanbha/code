@@ -1,0 +1,75 @@
+import time
+import random
+import os
+
+# Constants
+REGISTRATION_TIME = 3600  # 1 hour in seconds
+EXTENSION_TIME = 1800      # 30 minutes in seconds
+CHECK_INTERVAL = 600       # 10 minutes in seconds
+SAVE_INTERVAL = 300        # 5 minutes in seconds
+LOG_FILE = 'lottery_log.txt'
+
+# Function to log data
+def log_data(data):
+    with open(LOG_FILE, 'a') as f:
+        f.write(data + '\n')
+
+# Function to register users
+def register_users():
+    registered_users = set()
+    start_time = time.time()
+    end_time = start_time + REGISTRATION_TIME
+    last_save_time = start_time
+
+    while time.time() < end_time:
+        username = input("Enter a unique username: ")
+        
+        # Validate username
+        if not username or any(char in username for char in [' ', '!', '@', '#', '$', '%', '^', '&', '*']):
+            print("Invalid username. Please try again.")
+            continue
+        
+        if username in registered_users:
+            print("Username already taken. Please choose another.")
+            continue
+        
+        registered_users.add(username)
+        log_data(f"Registered: {username} at {time.ctime()}")
+        print(f"User  registered: {username}. Total participants: {len(registered_users)}")
+        
+        # Save progress every 5 minutes
+        if time.time() - last_save_time >= SAVE_INTERVAL:
+            log_data(f"Progress saved at {time.ctime()}. Total participants: {len(registered_users)}")
+            last_save_time = time.time()
+        
+        # Display remaining time every 10 minutes
+        if time.time() - start_time >= CHECK_INTERVAL:
+            remaining_time = end_time - time.time()
+            print(f"Remaining registration time: {remaining_time // 60} minutes.")
+            start_time += CHECK_INTERVAL  # Reset start time for next check
+
+    return registered_users
+
+# Function to draw the lottery
+def draw_lottery(registered_users):
+    if len(registered_users) < 5:
+        print("Not enough participants. Extending registration for another 30 minutes.")
+        time.sleep(EXTENSION_TIME)
+        registered_users = register_users()
+    
+    if not registered_users:
+        print("No participants registered. Exiting the program.")
+        return
+    
+    winner = random.choice(list(registered_users))
+    log_data(f"Winner: {winner} at {time.ctime()}")
+    print(f"The winner is: {winner}. Total participants: {len(registered_users)}")
+
+# Main function
+def main():
+    print("Welcome to the Lottery System!")
+    registered_users = register_users()
+    draw_lottery(registered_users)
+
+if _name_ == "_main_":
+    main()
